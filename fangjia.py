@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+import os
 import requests
 import json
 import xlwt
@@ -84,8 +85,19 @@ def main():
 	addSheetColumn(sheet_price, 1, 8, dealPrice.get('3_bed'))
 	addSheetColumn(sheet_price, 1, 9, listPrice.get('other'))
 	addSheetColumn(sheet_price, 1, 10, dealPrice.get('other'))
-	book.save('fangjia.xls') # 保存excel
+
+	create_ouput_dir()
+
+	book.save(get_output_dir() + '/fangjia.xls') # 保存excel
 	print('成功保存北京二手房供需走势和房价走势数据')
+
+def create_ouput_dir():
+	output_path = get_output_dir()
+	if not os.path.exists(output_path):
+		os.makedirs(output_path)
+
+def get_output_dir():
+	return os.getcwd() + "/output"
 
 
 if __name__ == '__main__':
