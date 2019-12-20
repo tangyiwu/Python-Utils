@@ -5,6 +5,11 @@ import os
 import requests
 import json
 import xlwt
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib import style
+
+style.use('fivethirtyeight')
 
 # https://bj.lianjia.com/fangjia/priceTrend/?region=city&region_id=110000&analysis=1 # 北京二手房供需走势
 # https://bj.lianjia.com/fangjia/priceTrend/?region=city&region_id=110000 # 北京二手房价格走势
@@ -58,6 +63,8 @@ def addSheetColumn(sheet, start_row, column_num, column_data):
 
 
 def main():
+	create_ouput_dir()
+
 	# 获取北京二手房供需走势数据
 	duration, houseAmount, customerAmount, showAmount, customerHouseRatio = getHouseAnalysis('bj', 'city', 110000)
 	# 创建一个excel对象
@@ -70,6 +77,27 @@ def main():
 	addSheetColumn(sheet_analysis, 1, 2, customerAmount)
 	addSheetColumn(sheet_analysis, 1, 3, showAmount)
 	addSheetColumn(sheet_analysis, 1, 4, customerHouseRatio)
+
+	analysis = {
+		'duration': duration,
+		'houseAmount': houseAmount,
+		'customerAmount': customerAmount,
+		'showAmount': showAmount,
+		'customerHouseRatio': customerHouseRatio
+	}
+	df = pd.DataFrame(analysis)
+	df.set_index('duration', inplace = True)
+	df.to_csv(get_output_dir() + '/house_analysis.csv')
+
+	df = pd.read_csv(get_output_dir() + '/house_analysis.csv')
+	df.set_index('duration', inplace = True)
+	print(df.head())
+	row = df['houseAmount'].argmax()
+	df[['houseAmount', 'customerAmount']].plot(figsize=(12, 6))
+	plt.xlabel('月份', size = 12)
+	plt.ylabel('amount', size = 15)
+	plt.grid(True)
+	plt.show()
 
 	month, listPrice, dealPrice = getHousePriceTrend('bj', 'city', 110000)
 	sheet_price = book.add_sheet('北京二手房价格走势数据', cell_overwrite_ok=True)
@@ -85,8 +113,6 @@ def main():
 	addSheetColumn(sheet_price, 1, 8, dealPrice.get('3_bed'))
 	addSheetColumn(sheet_price, 1, 9, listPrice.get('other'))
 	addSheetColumn(sheet_price, 1, 10, dealPrice.get('other'))
-
-	create_ouput_dir()
 
 	book.save(get_output_dir() + '/fangjia.xls') # 保存excel
 	print('成功保存北京二手房供需走势和房价走势数据')
